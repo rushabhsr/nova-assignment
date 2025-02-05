@@ -1,35 +1,41 @@
 import { useEffect, useState } from "react";
-import { Container, Typography, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, CircularProgress, Alert } from "@mui/material";
+import { Container, Typography, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, CircularProgress, Alert, Link } from "@mui/material";
 import apiService from "../../utils/apiService";
-import { useUser } from "../../context/useUser.js";
 
 const Dashboard = () => {
-  const { user } = useUser();
-  const [users, setUsers] = useState([]);
+  const [kycRequests, setKycRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState(null);
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchKycRequests = async () => {
       try {
-        const data = await apiService.get("/admin/users");
-        setUsers(data.users);
+        const data = await apiService.get("/kyc"); // Adjusted based on API response
+        setKycRequests(data.kycs);
       } catch (error) {
-        setStatusMessage({ type: "error", message: "Failed to fetch users" });
+        console.error(error);
+        setStatusMessage({ type: "error", message: "Failed to fetch KYC requests" });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUsers();
+    fetchKycRequests();
   }, []);
 
-  const handleStatusChange = async (userId, status) => {
+  const handleStatusChange = async (kycId, newStatus) => {
     try {
-      await apiService.put(`/admin/kyc/${userId}`, { status });
-      setUsers(users.map(user => user._id === userId ? { ...user, kycStatus: status } : user));
-      setStatusMessage({ type: "success", message: `KYC ${status} successfully!` });
+      await apiService.put(`/kyc/${kycId}`, { status: newStatus });
+
+      setKycRequests((prevKycRequests) =>
+        prevKycRequests.map((kyc) =>
+          kyc._id === kycId ? { ...kyc, status: newStatus } : kyc
+        )
+      );
+
+      setStatusMessage({ type: "success", message: `KYC ${newStatus} successfully!` });
     } catch (error) {
+      console.error(error);
       setStatusMessage({ type: "error", message: "Failed to update status" });
     }
   };
@@ -50,31 +56,39 @@ const Dashboard = () => {
                 <TableRow>
                   <TableCell><strong>Name</strong></TableCell>
                   <TableCell><strong>Email</strong></TableCell>
-                  <TableCell><strong>KYC Status</strong></TableCell>
+                  <TableCell><strong>Submitted By</strong></TableCell>
+                  <TableCell><strong>Document</strong></TableCell>
+                  <TableCell><strong>Status</strong></TableCell>
                   <TableCell><strong>Actions</strong></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {users.map(user => (
-                  <TableRow key={user._id}>
-                    <TableCell>{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.kycStatus}</TableCell>
+                {kycRequests.map((kyc,index) => (
+                  <TableRow key={index}>
+                    <TableCell>{kyc.name}</TableCell>
+                    <TableCell>{kyc.email}</TableCell>
+                    <TableCell>{kyc.user.name} ({kyc.user.email})</TableCell>
                     <TableCell>
-                      {user.kycStatus === "pending" && (
+                      <Link href={`/${kyc.document}`} target="_blank" rel="noopener noreferrer">
+                        View Document
+                      </Link>
+                    </TableCell>
+                    <TableCell>{kyc.status}</TableCell>
+                    <TableCell>
+                      {kyc.status === "pending" && (
                         <>
-                          <Button 
-                            variant="contained" 
-                            color="success" 
-                            onClick={() => handleStatusChange(user._id, "approved")}
+                          <Button
+                            variant="contained"
+                            color="success"
+                            onClick={() => handleStatusChange(kyc._id, "approved")}
                             sx={{ mr: 1 }}
                           >
                             Approve
                           </Button>
-                          <Button 
-                            variant="contained" 
-                            color="error" 
-                            onClick={() => handleStatusChange(user._id, "rejected")}
+                          <Button
+                            variant="contained"
+                            color="error"
+                            onClick={() => handleStatusChange(kyc._id, "rejected")}
                           >
                             Reject
                           </Button>

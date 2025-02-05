@@ -12,7 +12,7 @@ frontend/dist
 frontend/dist-ssr
 *.local
 *.env
-
+backend/uploads/
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

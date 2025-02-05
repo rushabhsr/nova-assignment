@@ -15,7 +15,7 @@ const kycSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    idDocument: {
+    document: {
       type: String,
       required: true,
     },

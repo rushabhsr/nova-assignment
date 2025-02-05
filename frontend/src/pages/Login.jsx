@@ -1,13 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TextField, Button, Container, Typography, Box, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/useUser.js";
 
 const Login = () => {
-  const { login } = useUser();
+  const { login, user } = useUser();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if the user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/"); // Redirect to home or dashboard based on role
+    }
+  }, [user, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -16,12 +24,27 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
 
-    const response = await login(formData);
-    if (response.success) {
-      navigate("/"); // Redirect to home or dashboard based on role
-    } else {
-      setError(response.message);
+    // Form validation
+    if (!formData.email || !formData.password) {
+      setError("Please fill in both fields.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await login(formData);
+      if (response.success) {
+        navigate("/"); // Redirect to home or dashboard
+      } else {
+        setError(response.message);
+      }
+    } catch (err) {
+      console.error(err)
+      setError("An error occurred while logging in.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -39,6 +62,8 @@ const Login = () => {
             onChange={handleChange}
             margin="normal"
             required
+            autoComplete="email"
+            type="email"
           />
           <TextField
             fullWidth
@@ -49,9 +74,17 @@ const Login = () => {
             onChange={handleChange}
             margin="normal"
             required
+            autoComplete="current-password"
           />
-          <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
-            Login
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            fullWidth
+            sx={{ mt: 2 }}
+            disabled={isLoading}
+          >
+            {isLoading ? "Logging in..." : "Login"}
           </Button>
         </form>
       </Box>
