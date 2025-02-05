@@ -1,7 +1,6 @@
-import React from "react";
 import { AppBar, Toolbar, Typography, Button } from "@mui/material";
 import { Link } from "react-router-dom";
-import { useUser } from "../context/UserContext.jsx";
+import { useUser } from "../context/useUser.js";
 
 const Navbar = () => {
   const { user, logout } = useUser();
@@ -19,9 +18,13 @@ const Navbar = () => {
 
         {user ? (
           <>
-            {user.role === "admin" && (
-              <Button color="inherit" component={Link} to="/admin/dashboard">
+            {user.role === "admin" ? (
+              <Button color="inherit" component={Link} to="/admin">
                 Admin Dashboard
+              </Button>
+            ) : (
+              <Button color="inherit" component={Link} to="/kyc">
+                Submit KYC
               </Button>
             )}
             <Button color="inherit" onClick={logout}>

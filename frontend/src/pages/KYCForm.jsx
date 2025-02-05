@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import { Container, Typography, TextField, Button, Box, CircularProgress, Alert } from "@mui/material";
 import apiService from "../utils/apiService";
-import { useUser } from "../context/UserContext.jsx";
+import { useUser } from "../context/useUser.js";
 
 const KYCForm = () => {
   const { user } = useUser();

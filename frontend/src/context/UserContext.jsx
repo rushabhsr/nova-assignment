@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import apiService from "../utils/apiService";
 
 const UserContext = createContext();
@@ -6,11 +7,33 @@ const UserContext = createContext();
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  // Load user session from local storage on app start
+  // Validate JWT Token
+  const isValidToken = async (token) => {
+    try {
+      const data = await apiService.post("/auth/session");
+
+      if (data?.user?.token === token) {
+        setUser(data.user);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        return { success: true };
+      }
+      return { success: false, message: "Invalid token received" };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Login failed" };
+    }
+  };
+
+
+  // Load user session from local storage
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      if (isValidToken(parsedUser.token)) {
+        setUser(parsedUser);
+      } else {
+        logout();
+      }
     }
   }, []);
 
@@ -18,11 +41,12 @@ export const UserProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const data = await apiService.post("/auth/login", credentials);
-      console.log("UserData", data);
-      const userData = { token: data.token, role: data.user.role };
-      setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
-      return { success: true };
+      if (data.user.token) {
+        setUser(data.user);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        return { success: true };
+      }
+      return { success: false, message: "Invalid token received" };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || "Login failed" };
     }
@@ -41,5 +65,9 @@ export const UserProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use UserContext
-export const useUser = () => useContext(UserContext);
+// PropTypes Validation
+UserProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
+export default UserContext;

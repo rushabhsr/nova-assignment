@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Container, Typography, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, CircularProgress, Alert } from "@mui/material";
 import apiService from "../../utils/apiService";
-import { useUser } from "../../context/UserContext.jsx";
+import { useUser } from "../../context/useUser.js";
 
 const Dashboard = () => {
   const { user } = useUser();

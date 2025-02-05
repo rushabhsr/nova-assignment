@@ -1,5 +1,4 @@
 import axios from "axios";
-import { useUser } from "../context/UserContext.jsx";
 
 // Base API URL (change according to your backend)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";

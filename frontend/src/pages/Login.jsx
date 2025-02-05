@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { TextField, Button, Container, Typography, Box, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "../context/UserContext.jsx";
+import { useUser } from "../context/useUser.js";
 
 const Login = () => {
   const { login } = useUser();
@@ -16,7 +16,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    
+
     const response = await login(formData);
     if (response.success) {
       navigate("/"); // Redirect to home or dashboard based on role

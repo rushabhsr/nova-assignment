@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Container, Typography, Box, CircularProgress, Alert } from "@mui/material";
 import apiService from "../utils/apiService";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "../context/UserContext.jsx";
+import { useUser } from "../context/useUser.js";
 
 const Home = () => {
   const navigate = useNavigate();
