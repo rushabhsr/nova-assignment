@@ -25,10 +25,12 @@ app.use(morgan("combined"));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+app.use(express.static(path.join(__dirname, 'dist')));
 
 app.use("/api", routes);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 
 app.use(notFound);
 app.use(errorHandler);

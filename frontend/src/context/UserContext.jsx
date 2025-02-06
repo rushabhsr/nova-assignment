@@ -19,7 +19,8 @@ export const UserProvider = ({ children }) => {
       }
       return { success: false, message: "Invalid token received" };
     } catch (error) {
-      return { success: false, message: error.response?.data?.message || "Login failed" };
+      console.log(error)
+      return { success: false, message: error.message || "Login failed" };
     }
   };
 
@@ -48,7 +49,7 @@ export const UserProvider = ({ children }) => {
       }
       return { success: false, message: "Invalid token received" };
     } catch (error) {
-      return { success: false, message: error.response?.data?.message || "Login failed" };
+      return { success: false, message: error.message || "Login failed" };
     }
   };
 

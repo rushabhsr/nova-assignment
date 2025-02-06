@@ -95,7 +95,6 @@ const Register = () => {
             ) : (
               'Register'
             )}
-            {isLoading ? '' : 'Register'}
           </Button>
 
         </form>
