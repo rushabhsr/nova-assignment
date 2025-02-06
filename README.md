@@ -134,3 +134,17 @@ Once both the backend and frontend servers are running, the application can be a
 - **File Storage**: Integration with cloud storage services like AWS S3 for file handling.
 - **More Comprehensive KPIs**: Extend the KPIs to include approval time, rejection reasons, etc.
 - **Role-based Permissions**: Implement more granular permissions for Admin roles.
+
+
+## Environment Files
+### Backend Configuration
+```
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/nova
+JWT_SECRET=supersecretkey123!$@#&secure
+FILE_UPLOAD_PATH=./uploads
+```
+### Frontend Configuration
+```
+VITE_API_BASE_URL=http://localhost:5000
+```

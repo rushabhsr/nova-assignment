@@ -16,7 +16,7 @@ const app = express();
 
 app.use(express.json());
 const corsOptions = {
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173","https://nova-assignment-597821801610.asia-south1.run.app"],
     methods: "GET,POST,PUT,DELETE,PATCH",
     allowedHeaders: "Content-Type,Authorization",
 };
