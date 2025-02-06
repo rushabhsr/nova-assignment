@@ -6,7 +6,9 @@ const KYCForm = () => {
   const [formData, setFormData] = useState({ name: "", email: "", document: null });
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [kyc, setKyc] = useState(null);
   const [kycStatus, setKycStatus] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState(null);
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
@@ -14,11 +16,13 @@ const KYCForm = () => {
       try {
         const response = await apiService.get("/kyc");
         if (response.kyc) {
+          setKyc(response.kyc);
           setKycStatus(response.kyc.status);
+          setRejectionReason(response.kyc.rejectionReason || null);
           setFormData({
             name: response.kyc.name,
             email: response.kyc.email,
-            document: null, // Not pre-filling document for security reasons
+            document: null,
           });
         }
       } catch (error) {
@@ -52,9 +56,22 @@ const KYCForm = () => {
       formDataToSend.append("email", formData.email);
       formDataToSend.append("document", formData.document);
 
-      await apiService.post("/kyc", formDataToSend, { headers: { "Content-Type": "multipart/form-data" } });
-      setMessage({ type: "success", message: "KYC submitted successfully!" });
-      setKycStatus("pending"); // Update status after re-submission
+      if (kyc) {
+        await apiService.patch(`/kyc/${kyc._id}`, formDataToSend, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        setMessage({ type: "success", message: "KYC resubmitted successfully!" });
+      } else {
+        await apiService.post("/kyc", formDataToSend, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        setMessage({ type: "success", message: "KYC submitted successfully!" });
+      }
+
+      setKycStatus("pending");
+      setRejectionReason(null);
     } catch (error) {
       console.error(error);
       setMessage({ type: "error", message: "Submission failed. Try again." });
@@ -79,23 +96,45 @@ const KYCForm = () => {
         <Typography variant="h4" mb={3}>KYC Submission</Typography>
 
         {message && <Alert severity={message.type}>{message.message}</Alert>}
+
         <Alert severity={kycStatus === "approved" ? "success" : kycStatus === "rejected" ? "error" : "info"}>
           Your KYC status: <strong>{kycStatus.toUpperCase()}</strong>
         </Alert>
 
-        {kycStatus && kycStatus !== "rejected" ? <></>
-          : (
-            <form onSubmit={handleSubmit}>
-              <TextField fullWidth label="Full Name" name="name" value={formData.name} onChange={handleChange} margin="normal" required />
-              <TextField fullWidth label="Email" name="email" value={formData.email} onChange={handleChange} margin="normal" required />
-              <input type="file" onChange={handleFileChange} accept="image/*,.pdf" required />
-              <Box mt={3}>
-                <Button type="submit" variant="contained" color="primary" disabled={loading}>
-                  {loading ? <CircularProgress size={24} /> : "Submit"}
-                </Button>
-              </Box>
-            </form>
-          )}
+        {kycStatus === "rejected" && rejectionReason && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Rejection Reason: <strong>{rejectionReason}</strong>
+          </Alert>
+        )}
+
+        {(kycStatus === "rejected" || !kyc) && (
+          <form onSubmit={handleSubmit}>
+            <TextField
+              fullWidth
+              label="Full Name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              margin="normal"
+              required
+            />
+            <input type="file" onChange={handleFileChange} accept="image/*,.pdf" required />
+            <Box mt={3}>
+              <Button type="submit" variant="contained" color="primary" disabled={loading}>
+                {loading ? <CircularProgress size={24} /> : kycStatus === "rejected" ? "Resubmit KYC" : "Submit"}
+              </Button>
+            </Box>
+          </form>
+        )}
       </Box>
     </Container>
   );

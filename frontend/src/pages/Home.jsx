@@ -1,9 +1,18 @@
 import { useEffect, useState } from "react";
-import { Container, Typography, Box, CircularProgress, Alert, Grid2 as Grid, Paper } from "@mui/material";
+import { Container, Typography, Box, CircularProgress, Alert, Grid, Paper } from "@mui/material";
 import apiService from "../utils/apiService";
 
+const colorMap = {
+  "Approved": "success.main",
+  "Rejected": "error.main",
+  "Pending for Verification": "warning.main",
+  "Pending for Submission": "warning.main",
+  "Total Registered Users": "primary.main",
+  "Total Users Submitted KYC": "primary.main"
+};
+
 const Home = () => {
-  const [kpiData, setKpiData] = useState(null);
+  const [kpiData, setKpiData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -11,7 +20,7 @@ const Home = () => {
     const fetchKPIStats = async () => {
       try {
         const response = await apiService.get("/kyc/stats");
-        setKpiData(response.data); // Ensure correct data extraction
+        setKpiData(response.data); // Assuming response.data is an array of KPI objects
       } catch (err) {
         console.error(err);
         setError("Failed to load statistics.");
@@ -33,33 +42,16 @@ const Home = () => {
           <Alert severity="error">{error}</Alert>
         ) : (
           <Grid container spacing={3} justifyContent="center">
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, textAlign: "center" }}>
-                <Typography variant="h6">Total Users</Typography>
-                <Typography variant="h5" color="primary">{kpiData.totalUsers}</Typography>
-              </Paper>
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, textAlign: "center" }}>
-                <Typography variant="h6">Approved</Typography>
-                <Typography variant="h5" color="success.main">{kpiData.approvedCount}</Typography>
-              </Paper>
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, textAlign: "center" }}>
-                <Typography variant="h6">Rejected</Typography>
-                <Typography variant="h5" color="error.main">{kpiData.rejectedCount}</Typography>
-              </Paper>
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, textAlign: "center" }}>
-                <Typography variant="h6">Pending</Typography>
-                <Typography variant="h5" color="warning.main">{kpiData.pendingCount}</Typography>
-              </Paper>
-            </Grid>
+            {kpiData.map((item, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <Paper elevation={3} sx={{ p: 2, textAlign: "center" }}>
+                  <Typography variant="h6">{item.label}</Typography>
+                  <Typography variant="h5" color={colorMap[item.label] || "text.primary"}>
+                    {item.value}
+                  </Typography>
+                </Paper>
+              </Grid>
+            ))}
           </Grid>
         )}
       </Box>

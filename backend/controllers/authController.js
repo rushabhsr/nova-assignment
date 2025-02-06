@@ -28,7 +28,7 @@ const registerUser = async (req, res) => {
 
         if (user) {
             res.status(201).json({
-                message: "User registered successfully",
+                message: "User registered successfully, redirecting to home page",
                 user: {
                     name: user.name,
                     email: user.email,

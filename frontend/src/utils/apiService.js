@@ -51,6 +51,14 @@ const apiService = {
       throw error.response?.data || "Request failed";
     }
   },
+  patch: async (url, data) => {
+    try {
+      const response = await api.patch(url, data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || "Request failed";
+    }
+  },
 
   delete: async (url) => {
     try {
