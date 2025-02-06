@@ -1,16 +1,22 @@
 import { useEffect, useState } from "react";
 import {
   Container, Typography, Box, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Paper, Button, CircularProgress, Alert, Link, Tabs, Tab
+  TableHead, TableRow, Paper, Button, CircularProgress, Alert, Tabs, Tab, Dialog, DialogContent, IconButton, TextField
 } from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
 import apiService from "../../utils/apiService";
 import { formatDateToIST } from "../../utils/commonUtils";
+
 const Dashboard = () => {
   const [kycRequests, setKycRequests] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectKycId, setRejectKycId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,9 +35,9 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
-  const handleStatusChange = async (kycId, newStatus) => {
+  const handleStatusChange = async (kycId, newStatus, rejectionReason = "") => {
     try {
-      await apiService.put(`/kyc/${kycId}`, { status: newStatus });
+      await apiService.put(`/kyc/${kycId}`, { status: newStatus, rejectionReason });
 
       setKycRequests((prevKycRequests) =>
         prevKycRequests.map((kyc) =>
@@ -44,6 +50,19 @@ const Dashboard = () => {
       console.error(error);
       setStatusMessage({ type: "error", message: "Failed to update status" });
     }
+  };
+
+  const handleRejectClick = (kycId) => {
+    setRejectKycId(kycId);
+    setRejectDialogOpen(true);
+  };
+
+  const handleRejectConfirm = () => {
+    if (rejectKycId) {
+      handleStatusChange(rejectKycId, "rejected", rejectReason);
+    }
+    setRejectDialogOpen(false);
+    setRejectReason("");
   };
 
   return (
@@ -82,9 +101,13 @@ const Dashboard = () => {
                         <TableCell>{kyc.email}</TableCell>
                         <TableCell>{formatDateToIST(kyc.updatedAt)}</TableCell>
                         <TableCell>
-                          <Link href={`/${kyc.document}`} target="_blank" rel="noopener noreferrer">
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => setSelectedDocument(`${import.meta.env.VITE_API_BASE_URL}/${kyc.document}`)}
+                          >
                             View Document
-                          </Link>
+                          </Button>
                         </TableCell>
                         <TableCell>{kyc.status}</TableCell>
                         <TableCell>
@@ -101,7 +124,7 @@ const Dashboard = () => {
                               <Button
                                 variant="contained"
                                 color="error"
-                                onClick={() => handleStatusChange(kyc._id, "rejected")}
+                                onClick={() => handleRejectClick(kyc._id)}
                               >
                                 Reject
                               </Button>
@@ -134,11 +157,51 @@ const Dashboard = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
-
             )}
           </>
         )}
       </Box>
+
+      {/* Document Viewer Dialog */}
+      <Dialog open={Boolean(selectedDocument)} onClose={() => setSelectedDocument(null)} maxWidth="md" fullWidth>
+        <Box display="flex" justifyContent="space-between" alignItems="center" p={2}>
+          <Typography variant="h6">Document Viewer</Typography>
+          <IconButton onClick={() => setSelectedDocument(null)}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <DialogContent>
+          {selectedDocument ? (
+            <iframe
+              src={selectedDocument}
+              width="100%"
+              height="500px"
+              style={{ border: "none" }}
+              title="Document Viewer"
+            />
+          ) : (
+            <Typography>No document selected</Typography>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Rejection Reason Dialog */}
+      <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)}>
+        <DialogContent>
+          <Typography variant="h6">Enter Rejection Reason</Typography>
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            margin="normal"
+          />
+          <Button variant="contained" color="error" onClick={handleRejectConfirm}>
+            Confirm Reject
+          </Button>
+        </DialogContent>
+      </Dialog>
     </Container>
   );
 };

@@ -39,9 +39,21 @@ const KYCForm = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e) => {
-    if (e.target.files.length > 0) {
-      setFormData((prev) => ({ ...prev, document: e.target.files[0] }));
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [error, setError] = useState("");
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        setError("File size must be 10MB or less.");
+        setSelectedFile(null);
+        return;
+      }
+
+      setSelectedFile(file);
+      setError("");
     }
   };
 
@@ -127,7 +139,38 @@ const KYCForm = () => {
               margin="normal"
               required
             />
-            <input type="file" onChange={handleFileChange} accept="image/*,.pdf" required />
+
+            <Box display="flex" flexDirection="column" alignItems="start" gap={1}>
+
+
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                id="upload-file"
+                style={{ display: "none" }}
+                onChange={handleFileChange}
+              />
+
+              <label htmlFor="upload-file">
+                <Button variant="contained" component="span" color="primary">
+                  Upload File
+                </Button>
+              </label>
+              {!selectedFile && <Typography variant="body2" color="textSecondary">
+                📌 Accepted formats: **Images (.jpg, .png) & PDFs** | Max file size: **10MB**
+              </Typography>}
+              {selectedFile && (
+                <Typography variant="body2" color="textSecondary">
+                  ✅ Selected: {selectedFile.name}
+                </Typography>
+              )}
+
+              {error && (
+                <Typography variant="body2" color="error">
+                  {error}
+                </Typography>
+              )}
+            </Box>
             <Box mt={3}>
               <Button type="submit" variant="contained" color="primary" disabled={loading}>
                 {loading ? <CircularProgress size={24} /> : kycStatus === "rejected" ? "Resubmit KYC" : "Submit"}

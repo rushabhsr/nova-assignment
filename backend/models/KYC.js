@@ -24,6 +24,11 @@ const kycSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    rejectionReason: {
+      type: String,
+      required: false,
+      default: ""
+    },
   },
   { timestamps: true }
 );
