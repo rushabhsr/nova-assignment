@@ -26,7 +26,12 @@ const KYCForm = () => {
           });
         }
       } catch (error) {
-        console.error("Failed to fetch KYC details:", error);
+        if (error.response?.status === 404) {
+          setKyc(null);
+          setKycStatus(null);
+        } else {
+          console.error("Failed to fetch KYC details:", error);
+        }
       } finally {
         setFetching(false);
       }
@@ -66,20 +71,20 @@ const KYCForm = () => {
       const formDataToSend = new FormData();
       formDataToSend.append("name", formData.name);
       formDataToSend.append("email", formData.email);
-      formDataToSend.append("document", formData.document);
+      formDataToSend.append("document", selectedFile);
 
       if (kyc) {
-        await apiService.patch(`/kyc/${kyc._id}`, formDataToSend, {
+        const data = await apiService.patch(`/kyc/${kyc._id}`, formDataToSend, {
           headers: { "Content-Type": "multipart/form-data" },
         });
 
-        setMessage({ type: "success", message: "KYC resubmitted successfully!" });
+        setMessage({ type: "success", message: data.message });
       } else {
-        await apiService.post("/kyc", formDataToSend, {
+        const data = await apiService.post("/kyc", formDataToSend, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-
-        setMessage({ type: "success", message: "KYC submitted successfully!" });
+        setKyc(data.kyc)
+        setMessage({ type: "success", message: data.message});
       }
 
       setKycStatus("pending");
@@ -109,9 +114,18 @@ const KYCForm = () => {
 
         {message && <Alert severity={message.type}>{message.message}</Alert>}
 
-        <Alert severity={kycStatus === "approved" ? "success" : kycStatus === "rejected" ? "error" : "info"}>
-          Your KYC status: <strong>{kycStatus.toUpperCase()}</strong>
-        </Alert>
+        {/* Show status if KYC exists */}
+        {kycStatus && (
+          <Alert severity={kycStatus === "approved" ? "success" : kycStatus === "rejected" ? "error" : "info"}>
+            Your KYC status: <strong>{kycStatus.toUpperCase()}</strong>
+            {kycStatus === "rejected" && (
+              <>
+                <br />
+                Please re-submit KYC details
+              </>
+            )}
+          </Alert>
+        )}
 
         {kycStatus === "rejected" && rejectionReason && (
           <Alert severity="warning" sx={{ mt: 2 }}>
@@ -119,7 +133,7 @@ const KYCForm = () => {
           </Alert>
         )}
 
-        {(kycStatus === "rejected" || !kyc) && (
+        {(!kyc || kycStatus === "rejected") && (
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
@@ -140,7 +154,7 @@ const KYCForm = () => {
               required
             />
 
-            <Box display="flex" flexDirection="column" alignItems="start" gap={1}>
+            <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
 
 
               <input
@@ -170,9 +184,7 @@ const KYCForm = () => {
                   {error}
                 </Typography>
               )}
-            </Box>
-            <Box mt={3}>
-              <Button type="submit" variant="contained" color="primary" disabled={loading}>
+              <Button sx={{ mt: 3 }} type="submit" variant="contained" color="primary" disabled={loading}>
                 {loading ? <CircularProgress size={24} /> : kycStatus === "rejected" ? "Resubmit KYC" : "Submit"}
               </Button>
             </Box>

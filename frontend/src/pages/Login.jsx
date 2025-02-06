@@ -13,7 +13,8 @@ const Login = () => {
   // Redirect if the user is already logged in
   useEffect(() => {
     if (user) {
-      navigate("/"); // Redirect to home or dashboard based on role
+      if(user.role ==="user") navigate("/kyc");
+      else if(user.role ==="admin") navigate("/admin");
     }
   }, [user, navigate]);
 
@@ -35,9 +36,7 @@ const Login = () => {
 
     try {
       const response = await login(formData);
-      if (response.success) {
-        navigate("/"); // Redirect to home or dashboard
-      } else {
+      if (!response.success) {
         setError(response.message);
       }
     } catch (err) {

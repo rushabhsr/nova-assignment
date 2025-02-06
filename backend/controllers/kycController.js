@@ -23,7 +23,7 @@ const submitKYC = async (req, res) => {
       status: "pending",
     });
 
-    res.status(201).json(newKYC);
+    res.status(201).json({ message: "KYC details submitted successfully!", kyc: newKYC });
   } catch (error) {
     console.trace(error);
     res.status(500).json({ message: error.message });
@@ -52,8 +52,8 @@ const getKYC = async (req, res) => {
 // @route GET /api/kyc
 const getAllKYC = async (req, res) => {
   try {
-    const kycs = await KYC.find().select("-__v").populate("user", "name email role");
-    const users = await User.find({ role: { $ne: "admin" } }).select("-__v -password");
+    const kycs = await KYC.find().select("-__v").populate("user", "name email role") || [];
+    const users = await User.find({ role: { $ne: "admin" } }).select("-__v -password") || [];
     res.status(200).json({ kycs, users, message: "KYC Details fetched successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -104,15 +104,31 @@ const getKPIs = async (req, res) => {
             $sum: { $cond: [{ $eq: ["$status", "rejected"] }, 1, 0] }
           }
         }
+      },
+      {
+        $project: {
+          totalUsersSubmittedKyc: { $ifNull: ["$totalUsersSubmittedKyc", 0] },
+          approvedCount: { $ifNull: ["$approvedCount", 0] },
+          rejectedCount: { $ifNull: ["$rejectedCount", 0] }
+        }
       }
     ]);
+
+    // If no records are found, counts will be empty
+    if (counts.length === 0) {
+      counts[0] = {
+        totalUsersSubmittedKyc: 0,
+        approvedCount: 0,
+        rejectedCount: 0
+      };
+    }
+
     const totalRegisteredUsers = await User.countDocuments();
-    const totalUsersSubmittedKyc = counts[0].totalUsersSubmittedKyc;
-    const approvedCount = counts[0].approvedCount;
-    const rejectedCount = counts[0].rejectedCount;
+    const totalUsersSubmittedKyc = counts[0].totalUsersSubmittedKyc || 0;
+    const approvedCount = counts[0].approvedCount || 0;
+    const rejectedCount = counts[0].rejectedCount || 0;
     const pendingForVerificationCount = totalUsersSubmittedKyc - (approvedCount + rejectedCount);
     const pendingForSubmissionCount = totalRegisteredUsers - totalUsersSubmittedKyc;
-
 
     res.status(200).json({
       message: "KPI stats fetched successfully",
@@ -126,6 +142,7 @@ const getKPIs = async (req, res) => {
       ]
     });
   } catch (error) {
+    console.trace(error)
     res.status(500).json({ message: error.message });
   }
 };
